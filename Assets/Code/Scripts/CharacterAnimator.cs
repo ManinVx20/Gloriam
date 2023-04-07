@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace StormDreams
 {
-    public class PlayerAnimator : MonoBehaviour
+    public class CharacterAnimator : MonoBehaviour
     {
         public enum MoveState
         {
