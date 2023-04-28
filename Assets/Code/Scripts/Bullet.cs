@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace StormDreams
 {
-    public class Bullet : MonoBehaviour
+    public class Bullet : PoolableObject
     {
         private Rigidbody rb;
         private Character character;
@@ -32,21 +32,25 @@ namespace StormDreams
             {
                 if (character != this.character)
                 {
+                    character.GetHit(this.character, 15.0f);
+
                     Despawn();
                 }
             }
         }
 
-        public void Initialize(Character character)
+        public void Initialize(Character character, Weapon weapon)
         {
             this.character = character;
 
             rb.velocity = transform.forward * 10.0f;
+
+            survivalTimer = 0.0f;
         }
 
         private void Despawn()
         {
-            Destroy(gameObject);
+            ReturnToPool();
         }
     }
 }

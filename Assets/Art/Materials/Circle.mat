@@ -52,5 +52,6 @@ Material:
     - _QueueOffset: 0
     - _RIngThickness: 0.005
     - _Radius: 0.4
-    m_Colors: []
+    m_Colors:
+    - _RingColor: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []

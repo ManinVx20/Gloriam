@@ -1,59 +1,124 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace StormDreams
 {
-    public class Character : MonoBehaviour
+    public class Character : PoolableObject
     {
+        public class OnCharacterHealthChangedArgs : EventArgs
+        {
+            public float HealthPercentage;
+        }
+        public event EventHandler<OnCharacterHealthChangedArgs> OnCharacterHealthChanged;
+
         [Header("Components")]
         [SerializeField]
         private CharacterAnimator characterAnimator;
         [SerializeField]
-        private GameObject bulletPrefab;
-        [SerializeField]
         private Transform spawnBulletPoint;
+        [SerializeField]
+        private Weapon weapon;
 
         [Header("Properties")]
         [SerializeField]
         private float moveSpeed = 4.0f;
         [SerializeField]
         private float rotateSpeed = 20.0f;
+        [SerializeField]
+        private float healthMax = 100.0f;
 
         private NavMeshAgent navMeshAgent;
+        private CharacterInfoUI characterInfoUI;
 
         private Vector2 moveInput;
         private Vector2 lookInput;
         private Vector3 moveDirection;
 
+        private float health;
         private float attackSingleTimer;
         private float attackSingleTimerMax = 0.5f;
         private float attackAutoTimer;
         private float attackAutoTimerMax = 0.1f;
         private bool isAttacking;
         private bool isAttackingAuto;
+        private Character firstTargetCharacterInRange;
 
-        protected virtual void Awake()
+        private void Awake()
+        {
+            Initialize();
+        }
+
+        private void Start()
+        {
+            Spawn();
+        }
+
+        private void Update()
+        {
+            Execute();
+        }
+
+        public virtual void Initialize()
         {
             navMeshAgent = GetComponent<NavMeshAgent>();
         }
 
-        protected virtual void Start()
+        public virtual void Spawn()
         {
+            characterInfoUI = ResourceManager.Instance.CharacterInfoUIPool.GetPrefabInstance();
+            characterInfoUI.transform.SetParent(UIManager.Instance.GetUICanvas<GameplayCanvas>().transform, false);
+            characterInfoUI.Initialize(this);
+
+            health = healthMax;
+
+            OnCharacterHealthChanged?.Invoke(this, new OnCharacterHealthChangedArgs
+            {
+                HealthPercentage = health / healthMax
+            });
+
             DisableAttack();
         }
 
-        protected virtual void Update()
+        public virtual void Despawn()
         {
+            characterInfoUI.Despawn();
+            characterInfoUI = null;
+        }
+
+        public virtual void Execute()
+        {
+            if (IsDead())
+            {
+                return;
+            }
+
             HandleInput(out moveInput, out lookInput);
             HandleMovement();
             HandleRotation();
-            HandleMoveAnimation();
+            HandleMovementAnimation();
             HandleAttack();
         }
 
-        public void EnableAttack()
+        public bool IsDead()
+        {
+            return health <= 0.0f;
+        }
+
+        public bool IsAttacking()
+        {
+            return isAttacking;
+        }
+
+        public Character FirstTargetCharacterInRange()
+        {
+            return firstTargetCharacterInRange;
+        }
+
+        public void EnableAttack(Character character)
         {
             if (isAttacking)
             {
@@ -61,6 +126,8 @@ namespace StormDreams
             }
 
             isAttacking = true;
+
+            firstTargetCharacterInRange = character;
 
             HandleAttackAnimation();
         }
@@ -74,6 +141,8 @@ namespace StormDreams
 
             isAttacking = false;
 
+            firstTargetCharacterInRange = null;
+
             HandleAttackAnimation();
         }
 
@@ -82,6 +151,48 @@ namespace StormDreams
             isAttackingAuto = !isAttackingAuto;
 
             HandleAttackAnimation();
+        }
+
+        public void GetHit(Character character, float damage)
+        {
+            if (IsDead())
+            {
+                return;
+            }
+
+            health -= damage;
+            if (health < 0.0f)
+            {
+                health = 0.0f;
+            }
+
+            OnCharacterHealthChanged?.Invoke(this, new OnCharacterHealthChangedArgs
+            {
+                HealthPercentage = health / healthMax
+            });
+
+            if (!IsDead())
+            {
+                characterAnimator.ChangeBaseState(CharacterAnimator.BaseState.GetHit);
+            }
+            else
+            {
+                HandleDeath();
+            }
+        }
+
+        public void SetPosition(Vector3 position)
+        {
+            navMeshAgent.Warp(position);
+        }
+
+        protected virtual void HandleDeath()
+        {
+            DisableAttack();
+
+            characterAnimator.ChangeBaseState(CharacterAnimator.BaseState.Die);
+
+            Invoke(nameof(Despawn), 3.0f);
         }
 
         protected virtual void HandleInput(out Vector2 moveInput, out Vector2 lookInput)
@@ -108,15 +219,15 @@ namespace StormDreams
             }
         }
 
-        private void HandleMoveAnimation()
+        private void HandleMovementAnimation()
         {
             if (moveDirection == Vector3.zero)
             {
-                characterAnimator.ChangeMoveState(CharacterAnimator.MoveState.Idle);
+                characterAnimator.ChangeBaseState(CharacterAnimator.BaseState.Idle);
             }
             else
             {
-                characterAnimator.ChangeMoveState(CharacterAnimator.MoveState.Run);
+                characterAnimator.ChangeBaseState(CharacterAnimator.BaseState.Run);
             }
 
             Vector3 animationMoveDirection = Quaternion.Euler(0.0f, -transform.eulerAngles.y, 0.0f) * moveDirection;
@@ -181,8 +292,7 @@ namespace StormDreams
 
         private void SpawnBullet()
         {
-            Bullet bullet = Instantiate(bulletPrefab, spawnBulletPoint.position, spawnBulletPoint.rotation).GetComponent<Bullet>();
-            bullet.Initialize(this);
+            weapon.SpawnBullet(spawnBulletPoint.position, spawnBulletPoint.rotation);
         }
     }
 }

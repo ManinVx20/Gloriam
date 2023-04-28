@@ -6,10 +6,12 @@ namespace StormDreams
 {
     public class CharacterAnimator : MonoBehaviour
     {
-        public enum MoveState
+        public enum BaseState
         {
             Idle = 0,
             Run = 1,
+            GetHit = 2,
+            Die = 3,
         }
 
         public enum AttackState
@@ -20,7 +22,7 @@ namespace StormDreams
         }
 
         private Animator animator;
-        private MoveState moveState;
+        private BaseState baseState;
 
         private int horizontalHash;
         private int verticalHash;
@@ -33,16 +35,16 @@ namespace StormDreams
             verticalHash = Animator.StringToHash("Vertical");
         }
 
-        public void ChangeMoveState(MoveState moveState)
+        public void ChangeBaseState(BaseState baseState)
         {
-            if (moveState == this.moveState)
+            if (baseState == this.baseState)
             {
                 return;
             }
 
-            this.moveState = moveState;
+            this.baseState = baseState;
 
-            animator.SetTrigger(this.moveState.ToString());
+            animator.SetTrigger(this.baseState.ToString());
         }
 
         public void SetAttackState(AttackState attackState)

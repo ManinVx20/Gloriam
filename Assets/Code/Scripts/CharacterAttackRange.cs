@@ -13,9 +13,16 @@ namespace StormDreams
 
         private void Update()
         {
+            if (character.IsDead())
+            {
+                return;
+            }
+
+            targetCharacterList.RemoveAll(character => character.IsDead());
+
             if (targetCharacterList.Count > 0)
             {
-                character.EnableAttack();
+                character.EnableAttack(targetCharacterList[0]);
             }
             else
             {
@@ -25,17 +32,37 @@ namespace StormDreams
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.TryGetComponent<Character>(out Character character) && character != this.character)
+            if (this.character.IsDead())
+            {
+                return;
+            }
+
+            if (other.TryGetComponent<Character>(out Character character) && character != this.character && !character.IsDead())
             {
                 targetCharacterList.Add(character);
+            }
+
+            if (other.TryGetComponent<Obstacle>(out Obstacle obstacle) && this.character is Player)
+            {
+                obstacle.SetTrasparentMaterial();
             }
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if (other.TryGetComponent<Character>(out Character character) && character != this.character)
+            if (this.character.IsDead())
+            {
+                return;
+            }
+
+            if (other.TryGetComponent<Character>(out Character character) && targetCharacterList.Contains(character))
             {
                 targetCharacterList.Remove(character);
+            }
+
+            if (other.TryGetComponent<Obstacle>(out Obstacle obstacle) && this.character is Player)
+            {
+                obstacle.SetNormalMaterial();
             }
         }
     }

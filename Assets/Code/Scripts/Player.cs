@@ -12,9 +12,9 @@ namespace StormDreams
     {
         private PlayerInput playerInput;
 
-        protected override void Awake()
+        public override void Initialize()
         {
-            base.Awake();
+            base.Initialize();
 
             playerInput = GetComponent<PlayerInput>();
         }
