@@ -32,7 +32,9 @@ namespace StormDreams
         [SerializeField]
         private CharacterVisual _characterVisual;
         [SerializeField]
-        private Weapon _weaponPrefab;
+        private WeaponSO _weaponSO;
+        [SerializeField]
+        private LayerMask _obstacleLayerMask;
 
         [Header("Properties")]
         [SerializeField]
@@ -55,10 +57,8 @@ namespace StormDreams
 
         private float _health;
         private float _energy;
-        private float _attackSingleTimer;
-        private float _attackSingleTimerMax = 0.6f;
-        private float _attackAutoTimer;
-        private float _attackAutoTimerMax = 0.2f;
+        private float _attackTimer;
+        private float _attackTimerMax;
         private bool _isAttacking;
         private bool _isAttackingAuto;
 
@@ -103,15 +103,22 @@ namespace StormDreams
             _moveInput = Vector2.zero;
             _lookInput = Vector2.zero;
 
+            SetPosition(GetSuitableSpawnPosition());
+            transform.rotation = Quaternion.identity;
+
             _characterAnimator.ChangeBaseState(CharacterAnimator.BaseState.Idle);
 
             if (_weapon == null)
             {
-                _weapon = Instantiate(_weaponPrefab);
-                _characterVisual.SetWeapon(_weapon);
+                _weapon = Instantiate(_weaponSO.WeaponPrefab);
+                _characterVisual.SetWeapon(_weapon, _weaponSO.WeaponType);
             }
 
-            _characterAnimator.SetAnimController(ResourceManager.Instance.GetCharAnimControllerByWeaponType(_weapon.GetWeaponType()));
+            _isAttackingAuto = false;
+            _attackTimerMax = 1.0f / _weaponSO.SingleFireRate;
+            _attackTimer = _attackTimerMax;
+
+            _characterAnimator.SetAnimController(_weapon.GetWeaponSO().CharAnimController);
 
             DisableAttack();
 
@@ -145,11 +152,17 @@ namespace StormDreams
                 _characterInfoUI.Despawn();
                 _characterInfoUI = null;
             }
+
+            if (_weapon != null)
+            {
+                _weapon.Despawn();
+                _weapon = null;
+            }
         }
 
         public virtual void Execute()
         {
-            if (IsDead())
+            if (IsDead() || (!GameManager.Instance.IsGamePlaying() && !GameManager.Instance.IsGameOver()))
             {
                 return;
             }
@@ -171,6 +184,11 @@ namespace StormDreams
             return _isAttacking;
         }
 
+        public bool IsAttackingAuto()
+        {
+            return _isAttackingAuto;
+        }
+
         public Character TargetCharacterInRange()
         {
             return _targetCharacterInRange;
@@ -189,8 +207,6 @@ namespace StormDreams
             }
 
             _isAttacking = true;
-
-            HandleAttackAnimation();
         }
 
         public void DisableAttack()
@@ -204,14 +220,21 @@ namespace StormDreams
 
             _targetCharacterInRange = null;
 
-            HandleAttackAnimation();
+            _characterAnimator.SetAttackState(CharacterAnimator.AttackState.StopAttack);
         }
 
         public void ToggleAttackAuto()
         {
             _isAttackingAuto = !_isAttackingAuto;
 
-            HandleAttackAnimation();
+            if (!_isAttackingAuto)
+            {
+                _attackTimerMax = 1.0f / _weaponSO.SingleFireRate;
+            }
+            else
+            {
+                _attackTimerMax = 1.0f / _weaponSO.AutoFireRate;
+            }
         }
 
         public void GetHit(Character character, float damage)
@@ -241,6 +264,7 @@ namespace StormDreams
             }
 
             ChangeHealth(10.0f);
+            ChangeEnergy(10.0f);
         }
 
         public void EnableLoseHealthOverTime()
@@ -351,70 +375,34 @@ namespace StormDreams
 
         private void HandleAttack()
         {
-            if (!_isAttacking)
-            {
-                _attackSingleTimer = _attackSingleTimerMax;
-                _attackAutoTimer = _attackAutoTimerMax;
-            }
-            else
+            _attackTimer = Mathf.Clamp(_attackTimer + Time.deltaTime, 0.0f, _attackTimerMax);
+
+            if (_isAttacking)
             {
                 if (_energy <= 0.0f)
                 {
                     return;
                 }
-                else if (!_isAttackingAuto)
+                else
                 {
-                    _attackSingleTimer += Time.deltaTime;
-                    if (_attackSingleTimer >= _attackSingleTimerMax)
+                    if (_attackTimer >= _attackTimerMax)
                     {
-                        _attackSingleTimer = 0.0f;
+                        _attackTimer = 0.0f;
 
                         Attack();
                     }
-
-                    _attackAutoTimer = _attackAutoTimerMax;
-                }
-                else
-                {
-                    _attackAutoTimer += Time.deltaTime;
-                    if (_attackAutoTimer >= _attackAutoTimerMax)
-                    {
-                        _attackAutoTimer = 0.0f;
-
-                        Attack();
-                    }
-
-                    _attackSingleTimer = _attackSingleTimerMax;
-                }
-            }
-        }
-
-        private void HandleAttackAnimation()
-        {
-            if (!_isAttacking)
-            {
-                _characterAnimator.SetAttackState(CharacterAnimator.AttackState.StopAttack);
-            }
-            else
-            {
-                if (_energy <= 0.0f)
-                {
-                    _characterAnimator.SetAttackState(CharacterAnimator.AttackState.StopAttack);
-                }
-                else if (!_isAttackingAuto)
-                {
-                    _characterAnimator.SetAttackState(CharacterAnimator.AttackState.AttackSingle);
-                }
-                else
-                {
-                    _characterAnimator.SetAttackState(CharacterAnimator.AttackState.AttackAuto);
                 }
             }
         }
 
         private void Attack()
         {
-            _weapon.Fire(this);
+            _characterAnimator.SetAttackState(CharacterAnimator.AttackState.Attack);
+
+            StartCoroutine(Utilities.DelayActionCoroutine(0.1f, () =>
+            {
+                _weapon.Fire(this);
+            }));
 
             ChangeEnergy(-1.0f);
         }
@@ -441,6 +429,20 @@ namespace StormDreams
             }
 
             _loseHealthOverTimeCoroutine = null;
+        }
+
+        private Vector3 GetSuitableSpawnPosition()
+        {
+            Vector3 spawnPosition = Vector3.zero;
+
+            do
+            {
+                float radius = 75.0f;
+                Vector2 spawnPositionHorizontal = UnityEngine.Random.insideUnitCircle * radius;
+                spawnPosition = new Vector3(spawnPositionHorizontal.x, 0.0f, spawnPositionHorizontal.y);
+            } while (Physics.CheckSphere(spawnPosition, 10.0f, _obstacleLayerMask, QueryTriggerInteraction.Ignore));
+
+            return spawnPosition;
         }
     }
 }

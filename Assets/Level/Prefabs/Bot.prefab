@@ -121,7 +121,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: ad4bb82bd843da1479ee67de1f1804c5, type: 3}
   m_Controller: {fileID: 0}
-  m_CullingMode: 0
+  m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -171,7 +171,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 949486347562715253}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.4, y: 0, z: 3.35}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -247,8 +247,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterAnimator: {fileID: 949486347540533874}
   _characterVisual: {fileID: 1554196546215033621}
-  _weaponPrefab: {fileID: 5661389827573525737, guid: 1498ff334ab3aa044acfbd897331dbe0,
-    type: 3}
+  _weaponSO: {fileID: 11400000, guid: 6700ba00e5e4c724e855159e7b729b92, type: 2}
+  _obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 320
   _moveSpeed: 4
   _rotateSpeed: 20
   _healthMax: 100

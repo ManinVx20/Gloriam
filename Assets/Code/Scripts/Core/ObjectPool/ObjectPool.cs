@@ -4,78 +4,81 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPool<T> : MonoBehaviour, IObjectPool<T> where T : MonoBehaviour, IPoolable
+namespace StormDreams
 {
-    private List<T> instanceList = new List<T>();
-    private Stack<T> reusableInstanceStack = new Stack<T>();
-
-    [SerializeField]
-    private T _prefab;
-
-    public T GetPrefabInstance()
+    public class ObjectPool<T> : MonoBehaviour, IObjectPool<T> where T : MonoBehaviour, IPoolable
     {
-        T instance;
+        private List<T> instanceList = new List<T>();
+        private Stack<T> reusableInstanceStack = new Stack<T>();
 
-        if (reusableInstanceStack.Count == 0)
+        [SerializeField]
+        private T _prefab;
+
+        public T GetPrefabInstance()
         {
-            instance = Instantiate(_prefab);
+            T instance;
 
-            instanceList.Add(instance);
+            if (reusableInstanceStack.Count == 0)
+            {
+                instance = Instantiate(_prefab);
+
+                instanceList.Add(instance);
+            }
+            else
+            {
+                instance = reusableInstanceStack.Pop();
+
+                instance.transform.SetParent(null);
+                instance.transform.localPosition = Vector3.zero;
+                instance.transform.localScale = Vector3.one;
+                instance.transform.localEulerAngles = Vector3.zero;
+
+                instance.gameObject.SetActive(true);
+            }
+
+            instance.Pool = this;
+            instance.PrepareToUse();
+
+            return instance;
         }
-        else
-        {
-            instance = reusableInstanceStack.Pop();
 
-            instance.transform.SetParent(null);
+        public void ReturnToPool(T instance)
+        {
+            instance.gameObject.SetActive(false);
+
+            instance.transform.SetParent(transform);
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localScale = Vector3.one;
             instance.transform.localEulerAngles = Vector3.zero;
 
-            instance.gameObject.SetActive(true);
+
+            reusableInstanceStack.Push(instance);
         }
 
-        instance.Pool = this;
-        instance.PrepareToUse();
-
-        return instance;
-    }
-
-    public void ReturnToPool(T instance)
-    {
-        instance.gameObject.SetActive(false);
-
-        instance.transform.SetParent(transform);
-        instance.transform.localPosition = Vector3.zero;
-        instance.transform.localScale = Vector3.one;
-        instance.transform.localEulerAngles = Vector3.zero;
-
-
-        reusableInstanceStack.Push(instance);
-    }
-
-    public void ReturnToPool(object instance)
-    {
-        if (instance is T)
+        public void ReturnToPool(object instance)
         {
-            ReturnToPool(instance as T);
-        }
-    }
-
-    public void Dispose()
-    {
-        for (int i = 0; i < instanceList.Count; i++)
-        {
-            if (instanceList[i] != null)
+            if (instance is T)
             {
-                instanceList[i].Dispose();
+                ReturnToPool(instance as T);
             }
         }
 
-        instanceList.Clear();
-    }
+        public void Dispose()
+        {
+            for (int i = 0; i < instanceList.Count; i++)
+            {
+                if (instanceList[i] != null)
+                {
+                    instanceList[i].Dispose();
+                }
+            }
 
-    public bool Exist()
-    {
-        return this != null;
+            instanceList.Clear();
+        }
+
+        public bool Exist()
+        {
+            return this != null;
+        }
     }
 }

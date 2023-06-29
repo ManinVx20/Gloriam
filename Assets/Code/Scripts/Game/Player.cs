@@ -1,10 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.EventSystems;
-using UnityEngine.UIElements;
 
 namespace StormDreams
 {
@@ -33,15 +29,6 @@ namespace StormDreams
             base.Initialize();
 
             _playerInput = GetComponent<PlayerInput>();
-        }
-
-        public override void Spawn()
-        {
-            base.Spawn();
-
-            SetPosition(Vector3.zero);
-            transform.rotation = Quaternion.identity;
-
         }
 
         protected override void HandleInput(out Vector2 moveInput, out Vector2 lookInput)

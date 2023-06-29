@@ -29,14 +29,14 @@ namespace StormDreams
 
         public Vector2 GetMoveInput()
         {
-            return _gameControls.Player.Move.ReadValue<Vector2>();
-            //return _moveJoystick.Input;
+            return _moveJoystick.Input;
+            //return _gameControls.Player.Move.ReadValue<Vector2>();
         }
 
         public Vector2 GetLookInput()
         {
-            //return gameControls.Player.Look.ReadValue<Vector2>();
             return _lookJoystick.Input;
+            //return gameControls.Player.Look.ReadValue<Vector2>();
         }
     }
 }

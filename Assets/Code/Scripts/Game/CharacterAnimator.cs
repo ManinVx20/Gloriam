@@ -17,8 +17,7 @@ namespace StormDreams
         public enum AttackState
         {
             StopAttack = 0,
-            AttackSingle = 1,
-            AttackAuto = 2,
+            Attack = 1,
         }
 
         private Animator _animator;

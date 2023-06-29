@@ -34,6 +34,10 @@ namespace StormDreams
         private Button _loseUIExitButton;
         [SerializeField]
         private Button _pauseButton;
+        [SerializeField]
+        private GameObject _gameStartCountdownUI;
+        [SerializeField]
+        private TextMeshProUGUI _countdownText;
 
         private void Awake()
         {
@@ -49,16 +53,21 @@ namespace StormDreams
             {
                 UIManager.Instance.OpenUICanvas<PauseCanvas>();
             });
+
+            GameManager.Instance.OnGameStateChanged += GameManager_OnGameStateChanged;
         }
 
         public override void Setup()
         {
             base.Setup();
 
-            _circleCreatingNotificationUI.SetActive(false);
-            _circleShrinkingNotificationUI.SetActive(false);
-            _winUI.SetActive(false);
-            _loseUI.SetActive(false);
+            if (!GameManager.Instance.IsGamePlaying())
+            {
+                _circleCreatingNotificationUI.SetActive(false);
+                _circleShrinkingNotificationUI.SetActive(false);
+                _winUI.SetActive(false);
+                _loseUI.SetActive(false);
+            }
         }
 
         public void SetMatchTimerText(float value)
@@ -67,6 +76,11 @@ namespace StormDreams
             int seconds = Mathf.FloorToInt(value % 60);
 
             _matchTimerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        }
+
+        public void SetCountdownToStartTimerText(float value)
+        {
+            _countdownText.text = Mathf.Ceil(value).ToString();
         }
 
         public void SetAliveText(int value)
@@ -106,14 +120,32 @@ namespace StormDreams
 
         public void OpenWinUI(int killCount)
         {
-            _winUI.SetActive(true);
-            _winUIKillsText.text = $"Kills: {killCount}";
+            StartCoroutine(Utilities.DelayActionCoroutine(3.0f, () =>
+            {
+                _winUI.SetActive(true);
+                _winUIKillsText.text = $"Kills: {killCount}";
+            }));
         }
 
         public void OpenLoseUI(int killCount)
         {
-            _loseUI.SetActive(true);
-            _loseUIKillsText.text = $"Kills: {killCount}";
+            StartCoroutine(Utilities.DelayActionCoroutine(3.0f, () =>
+            {
+                _loseUI.SetActive(true);
+                _loseUIKillsText.text = $"Kills: {killCount}";
+            }));
+        }
+
+        private void GameManager_OnGameStateChanged(object sender, System.EventArgs args)
+        {
+            if (GameManager.Instance.IsCountdownToStartActive())
+            {
+                _gameStartCountdownUI.SetActive(true);
+            }
+            else
+            {
+                _gameStartCountdownUI.SetActive(false);
+            }
         }
     }
 }

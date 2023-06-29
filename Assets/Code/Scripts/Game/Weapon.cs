@@ -6,15 +6,8 @@ namespace StormDreams
 {
     public class Weapon : MonoBehaviour
     {
-        public enum Type
-        {
-            None = 0,
-            Pistol = 1,
-            AssaultRifle = 2,
-        }
-
         [SerializeField]
-        private Type _type;
+        private WeaponSO _weaponSO;
         [SerializeField]
         private BulletPool _bulletPool;
         [SerializeField]
@@ -25,21 +18,21 @@ namespace StormDreams
             _bulletPool.Dispose();
         }
 
-        public Type GetWeaponType()
+        public WeaponSO GetWeaponSO()
         {
-            return _type;
+            return _weaponSO;
         }
 
         public void Fire(Character character)
         {
             Bullet bullet = _bulletPool.GetPrefabInstance();
             bullet.transform.SetPositionAndRotation(_firePointTransform.position, _firePointTransform.rotation);
-            bullet.Initialize(character, this);
+            bullet.Initialize(character, _weaponSO.Damage);
         }
 
         public void Despawn()
         {
-            _bulletPool.Dispose();
+            //_bulletPool.Dispose();
 
             Destroy(gameObject);
         }

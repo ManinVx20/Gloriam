@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1659874866982570184}
   m_Layer: 0
-  m_Name: HG_Holder
+  m_Name: Pistol_Holder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -498,9 +498,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _weaponHolderDataArray:
-  - Type: 1
+  - WeaponType: 0
     Transform: {fileID: 1659874866982570184}
-  - Type: 2
+  - WeaponType: 1
     Transform: {fileID: 5447647525846072951}
 --- !u!1 &5185309172289659665
 GameObject:
@@ -1912,7 +1912,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5447647525846072951}
   m_Layer: 0
-  m_Name: AR_Holder
+  m_Name: AssaultRifle_Holder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

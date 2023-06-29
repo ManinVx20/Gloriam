@@ -8,7 +8,7 @@ namespace StormDreams
     {
         private Rigidbody _rb;
         private Character _character;
-
+        private float _damage;
         private float _survivalTimer;
         private float _survivalTimerMax = 3.0f;
 
@@ -32,7 +32,7 @@ namespace StormDreams
             {
                 if (character != _character)
                 {
-                    character.GetHit(_character, 10.0f);
+                    character.GetHit(_character, _damage);
 
                     Despawn();
                 }
@@ -44,12 +44,12 @@ namespace StormDreams
             }
         }
 
-        public void Initialize(Character character, Weapon weapon)
+        public void Initialize(Character character, float damage)
         {
             _character = character;
+            _damage = damage;
 
             _rb.velocity = transform.forward * 10.0f;
-
             _survivalTimer = 0.0f;
         }
 

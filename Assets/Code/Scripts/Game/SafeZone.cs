@@ -16,8 +16,6 @@ namespace StormDreams
         }
 
         [SerializeField]
-        private Match _match;
-        [SerializeField]
         private ShrinkingData[] _shrinkingDataArray;
         [SerializeField]
         private Transform _shrinkingCircleTransform;
@@ -57,9 +55,14 @@ namespace StormDreams
 
         private void Update()
         {
+            if (!GameManager.Instance.IsGamePlaying() && !GameManager.Instance.IsGameOver())
+            {
+                return;
+            }
+
             if (_shrinkingDataIndex < _shrinkingDataArray.Length)
             {
-                float matchTimer = _match.GetMatchTimer();
+                float matchTimer = GameManager.Instance.GetGamePlayingTimer();
 
                 if (matchTimer > _shrinkingDataArray[_shrinkingDataIndex].ShrinkingTime && !_updated)
                 {

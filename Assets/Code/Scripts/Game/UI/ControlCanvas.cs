@@ -22,7 +22,7 @@ namespace StormDreams
         {
             base.Setup();
 
-            _attackAutoToggle.isOn = false;
+            _attackAutoToggle.SetIsOnWithoutNotify(Player.Instance.IsAttackingAuto());
         }
     }
 }

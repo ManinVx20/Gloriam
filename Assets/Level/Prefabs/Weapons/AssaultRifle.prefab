@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 920e5e04c91e4a04a8c26d21d2efd3d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _type: 2
+  _weaponSO: {fileID: 11400000, guid: 0482dfb7848bf5647a77980053cd56d0, type: 2}
   _bulletPool: {fileID: 669756845042477765}
   _firePointTransform: {fileID: 8376352835115941874}
 --- !u!1001 &1314922127563414359

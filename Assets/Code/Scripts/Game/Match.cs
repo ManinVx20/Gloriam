@@ -13,10 +13,8 @@ namespace StormDreams
         private BotSpawner _botSpawner;
 
         private NavMeshDataInstance _navMeshDataInstance;
-        private float _matchTimer;
         private int _aliveCount;
         private int _killsCount;
-        private bool _ended;
 
         private void Awake()
         {
@@ -27,25 +25,6 @@ namespace StormDreams
 
         private void Start()
         {
-            StartMatch();
-        }
-
-        private void OnDestroy()
-        {
-            NavMesh.RemoveNavMeshData(_navMeshDataInstance);
-
-            Character.OnAnyCharacterDead -= Character_OnAnyCharacterDead;
-        }
-
-        private void Update()
-        {
-            _matchTimer += Time.deltaTime;
-
-            UIManager.Instance.GetUICanvas<MatchCanvas>().SetMatchTimerText(_matchTimer);
-        }
-
-        public void StartMatch()
-        {
             Character.OnAnyCharacterDead += Character_OnAnyCharacterDead;
 
             _aliveCount = 50;
@@ -55,20 +34,11 @@ namespace StormDreams
             UIManager.Instance.GetUICanvas<MatchCanvas>().SetKillsText(_killsCount);
         }
 
-        public void EndMatch(bool won)
+        private void OnDestroy()
         {
-            _ended = true;
+            Character.OnAnyCharacterDead -= Character_OnAnyCharacterDead;
 
-            UIManager.Instance.GetUICanvas<ControlCanvas>().Close();
-
-            if (won)
-            {
-                UIManager.Instance.GetUICanvas<MatchCanvas>().OpenWinUI(_killsCount);
-            }
-            else
-            {
-                UIManager.Instance.GetUICanvas<MatchCanvas>().OpenLoseUI(_killsCount);
-            }
+            NavMesh.RemoveNavMeshData(_navMeshDataInstance);
         }
 
         public void Despawn()
@@ -78,9 +48,14 @@ namespace StormDreams
             Destroy(gameObject);
         }
 
-        public float GetMatchTimer()
+        public int GetAliveCount()
         {
-            return _matchTimer;
+            return _aliveCount;
+        }
+
+        public int GetKillsCount()
+        {
+            return _killsCount;
         }
 
         public void ReduceAliveCount()
@@ -114,15 +89,15 @@ namespace StormDreams
                 }
             }
 
-            if (!_ended)
+            if (!GameManager.Instance.IsGameOver())
             {
                 if (sender is Player)
                 {
-                    EndMatch(false);
+                    GameManager.Instance.EndGame(false);
                 }
                 else if (_aliveCount == 1)
                 {
-                    EndMatch(true);
+                    GameManager.Instance.EndGame(true);
                 }
             }
         }

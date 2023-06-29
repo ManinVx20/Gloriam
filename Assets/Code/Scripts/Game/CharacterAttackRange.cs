@@ -13,7 +13,7 @@ namespace StormDreams
 
         private void Update()
         {
-            if (_character.IsDead())
+            if (_character.IsDead() || (!GameManager.Instance.IsGamePlaying() && !GameManager.Instance.IsGameOver()))
             {
                 return;
             }
